@@ -8,6 +8,7 @@ import ai.bandroom.domain.usecase.LoginUseCase
 import ai.bandroom.domain.usecase.SignupUseCase
 import ai.bandroom.viewmodel.LoginViewModel
 import ai.bandroom.viewmodel.SignupViewModel
+import ai.bandroom.viewmodel.ProfileViewModel
 import android.content.Context
 import okhttp3.JavaNetCookieJar
 import okhttp3.OkHttpClient
@@ -16,27 +17,32 @@ import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.CookieManager
+import java.net.CookiePolicy
 
 // ✅ Module for network configuration
 val networkModule = module {
 
-    // Provide OkHttpClient with Cookie support
+    // ✅ Use a CookieManager that allows all cookies (including HttpOnly, refresh_token)
     single {
+        val cookieManager = CookieManager().apply {
+            setCookiePolicy(CookiePolicy.ACCEPT_ALL)
+        }
+
         OkHttpClient.Builder()
-            .cookieJar(JavaNetCookieJar(CookieManager()))
+            .cookieJar(JavaNetCookieJar(cookieManager))
             .build()
     }
 
-    // Provide Retrofit instance
+    // ✅ Provide Retrofit instance
     single {
         Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8081/") // Localhost access from Android emulator
+            .baseUrl("http://10.0.2.2:8081/") // Emulator → localhost
             .client(get())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
-    // Provide AuthApiService using Retrofit
+    // ✅ Provide API service interface
     single<AuthApiService> {
         get<Retrofit>().create(AuthApiService::class.java)
     }
@@ -44,7 +50,6 @@ val networkModule = module {
 
 // ✅ Repository module
 val repositoryModule = module {
-    // AuthRepository(authApiService, tokenManager)
     single { AuthRepository(get(), get()) }
 }
 
@@ -54,16 +59,17 @@ val useCaseModule = module {
     single { SignupUseCase(get()) }
 }
 
-// ✅ ViewModel module
+// ✅ ViewModels
 val viewModelModule = module {
     viewModel { LoginViewModel(get()) }
     viewModel { SignupViewModel(get()) }
+    viewModel { ProfileViewModel(get()) }
 }
 
-// ✅ Entry point: all modules combined
+// ✅ Combine all modules
 fun appModule(context: Context) = listOf(
     networkModule,
-    dataStoreModule,    // Injects TokenManager using context
+    dataStoreModule,
     repositoryModule,
     useCaseModule,
     viewModelModule

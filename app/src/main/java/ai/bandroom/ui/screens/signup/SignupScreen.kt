@@ -8,12 +8,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun SignupScreen(viewModel: SignupViewModel, navController: NavController) {
+fun SignupScreen(navController: NavController) {
+    val viewModel: SignupViewModel = koinViewModel() // ✅ Koin ViewModel
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     if (uiState.isSuccess) {

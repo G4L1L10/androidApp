@@ -71,7 +71,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     // Retrofit for API calls
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation(libs.retrofit)
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
     // OkHttp for networking + cookies
@@ -80,6 +80,10 @@ dependencies {
 
     // Dependency Injection: Koin for Compose
     implementation("io.insert-koin:koin-androidx-compose:3.5.3")
+
+    // Material Icons Extended (for icons like School, Person, etc.)
+    implementation("androidx.compose.material:material-icons-extended")
+
 
     // Unit & UI Testing
     testImplementation(libs.junit)

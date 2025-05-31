@@ -73,14 +73,20 @@ class AuthRepository(
 
     suspend fun logout(): Boolean {
         return try {
+            Log.d("AuthRepo", "📨 logout() - calling backend")
             val response = api.logout()
+            Log.d("AuthRepo", "📬 logout() response code: ${response.code()}") // ✅ ADDED
+            Log.d("AuthRepo", "🧹 logout() - clearing tokens")
             tokenManager.clearTokens()
-            response.isSuccessful
+            val success = response.isSuccessful
+            Log.d("AuthRepo", "✅ logout() - API success: $success")
+            success
         } catch (e: Exception) {
-            Log.e("AuthRepo", "Logout failed", e)
+            Log.e("AuthRepo", "❌ Logout failed", e)
             false
         }
     }
+
 
     suspend fun getAccessToken(): String? {
         return tokenManager.getAccessToken().first()

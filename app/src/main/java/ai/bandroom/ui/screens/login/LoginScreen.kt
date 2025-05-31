@@ -8,22 +8,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun LoginScreen(viewModel: LoginViewModel, navController: NavController) {
+fun LoginScreen(navController: NavController) {
+    val viewModel: LoginViewModel = koinViewModel() // ✅ Inject ViewModel via Koin
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    if (uiState.isSuccess) {
-        // Navigate to home if login successful
-        LaunchedEffect(Unit) {
-            navController.navigate("home") {
-                popUpTo("login") { inclusive = true }
-            }
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -60,7 +53,9 @@ fun LoginScreen(viewModel: LoginViewModel, navController: NavController) {
 
         PrimaryButton(
             text = if (uiState.isLoading) "Logging in..." else "Login",
-            onClick = { viewModel.onEvent(AuthUiEvent.Submit) },
+            onClick = {
+                viewModel.onEvent(AuthUiEvent.Submit, navController)
+            },
             enabled = !uiState.isLoading
         )
 
