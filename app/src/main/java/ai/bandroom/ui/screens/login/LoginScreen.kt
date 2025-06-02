@@ -15,7 +15,7 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun LoginScreen(navController: NavController) {
-    val viewModel: LoginViewModel = koinViewModel() // ✅ Inject ViewModel via Koin
+    val viewModel: LoginViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
@@ -53,9 +53,7 @@ fun LoginScreen(navController: NavController) {
 
         PrimaryButton(
             text = if (uiState.isLoading) "Logging in..." else "Login",
-            onClick = {
-                viewModel.onEvent(AuthUiEvent.Submit, navController)
-            },
+            onClick = { viewModel.onEvent(AuthUiEvent.Submit, navController) },
             enabled = !uiState.isLoading
         )
 

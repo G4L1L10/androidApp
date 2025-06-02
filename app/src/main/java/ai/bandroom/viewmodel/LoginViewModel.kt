@@ -1,8 +1,9 @@
 package ai.bandroom.viewmodel
 
+import ai.bandroom.data.local.TokenManager
 import ai.bandroom.domain.usecase.LoginUseCase
-import ai.bandroom.viewmodel.state.AuthUiEvent
 import ai.bandroom.ui.screens.login.LoginUiState
+import ai.bandroom.viewmodel.state.AuthUiEvent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
@@ -10,7 +11,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class LoginViewModel(private val loginUseCase: LoginUseCase) : ViewModel() {
+class LoginViewModel(
+    private val loginUseCase: LoginUseCase,
+    private val tokenManager: TokenManager // ✅ inject via Koin
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
@@ -29,9 +33,15 @@ class LoginViewModel(private val loginUseCase: LoginUseCase) : ViewModel() {
             val result = loginUseCase(_uiState.value.email, _uiState.value.password)
 
             if (result.isSuccess) {
-                _uiState.value = _uiState.value.copy(isSuccess = true, isLoading = false)
-                navController?.navigate("main") {
-                    popUpTo("login") { inclusive = true }
+                val token = result.getOrNull()
+                if (token != null) {
+                    tokenManager.saveAccessToken(token) // ✅ Persist token
+                    _uiState.value = _uiState.value.copy(isSuccess = true, isLoading = false)
+                    navController?.navigate("main") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                } else {
+                    _uiState.value = _uiState.value.copy(error = "Token missing", isLoading = false)
                 }
             } else {
                 _uiState.value = _uiState.value.copy(

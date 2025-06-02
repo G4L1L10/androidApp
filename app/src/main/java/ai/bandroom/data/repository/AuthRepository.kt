@@ -15,7 +15,9 @@ class AuthRepository(
         return try {
             val response = api.register(SignupRequest(email, password))
             if (response.isSuccessful) {
-                tokenManager.saveAccessToken(response.body()?.access_token ?: "")
+                val token = response.body()?.access_token ?: ""
+                Log.d("AuthRepo", "✅ Registered. Saving token: $token")
+                tokenManager.saveAccessToken(token)
                 Result.success(Unit)
             } else {
                 Log.e("AuthRepo", "Register failed: ${response.code()}")
@@ -27,12 +29,19 @@ class AuthRepository(
         }
     }
 
-    suspend fun login(email: String, password: String): Result<Unit> {
+    suspend fun login(email: String, password: String): Result<String> {
         return try {
             val response = api.login(LoginRequest(email, password))
             if (response.isSuccessful) {
-                tokenManager.saveAccessToken(response.body()?.access_token ?: "")
-                Result.success(Unit)
+                val token = response.body()?.access_token
+                return if (!token.isNullOrEmpty()) {
+                    Log.d("AuthRepo", "✅ Login success, token: $token")
+                    tokenManager.saveAccessToken(token)
+                    Log.d("AuthRepo", "💾 Token saved to DataStore")
+                    Result.success(token)
+                } else {
+                    Result.failure(Exception("Access token missing"))
+                }
             } else {
                 Log.e("AuthRepo", "Login failed: ${response.code()}")
                 Result.failure(Exception(response.errorBody()?.string() ?: "Login failed"))
@@ -46,7 +55,9 @@ class AuthRepository(
     suspend fun validateAccessToken(): Boolean {
         return try {
             val token = tokenManager.getAccessToken().first() ?: return false
+            Log.d("AuthRepo", "🔐 Validating token: $token")
             val response = api.validateToken("Bearer $token")
+            Log.d("AuthRepo", "🧾 Validation response: ${response.code()}")
             response.isSuccessful
         } catch (e: Exception) {
             Log.e("AuthRepo", "Token validation failed", e)
@@ -60,7 +71,8 @@ class AuthRepository(
             if (response.isSuccessful) {
                 val newToken = response.body()?.access_token ?: return false
                 tokenManager.saveAccessToken(newToken)
-                true
+                Log.d("AuthRepo", "🔄 Refreshed and saved token: $newToken")
+                return true
             } else {
                 Log.e("AuthRepo", "Refresh token failed: ${response.code()}")
                 false
@@ -75,7 +87,7 @@ class AuthRepository(
         return try {
             Log.d("AuthRepo", "📨 logout() - calling backend")
             val response = api.logout()
-            Log.d("AuthRepo", "📬 logout() response code: ${response.code()}") // ✅ ADDED
+            Log.d("AuthRepo", "📬 logout() response code: ${response.code()}")
             Log.d("AuthRepo", "🧹 logout() - clearing tokens")
             tokenManager.clearTokens()
             val success = response.isSuccessful
@@ -86,7 +98,6 @@ class AuthRepository(
             false
         }
     }
-
 
     suspend fun getAccessToken(): String? {
         return tokenManager.getAccessToken().first()

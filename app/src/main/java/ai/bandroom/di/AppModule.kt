@@ -9,6 +9,7 @@ import ai.bandroom.domain.usecase.SignupUseCase
 import ai.bandroom.viewmodel.LoginViewModel
 import ai.bandroom.viewmodel.SignupViewModel
 import ai.bandroom.viewmodel.ProfileViewModel
+import ai.bandroom.viewmodel.SplashViewModel
 import android.content.Context
 import okhttp3.JavaNetCookieJar
 import okhttp3.OkHttpClient
@@ -61,9 +62,11 @@ val useCaseModule = module {
 
 // ✅ ViewModels
 val viewModelModule = module {
-    viewModel { LoginViewModel(get()) }
+    viewModel { LoginViewModel(get(), get()) } // LoginUseCase and TokenManager
     viewModel { SignupViewModel(get()) }
     viewModel { ProfileViewModel(get()) }
+    viewModel { SplashViewModel(get()) }
+
 }
 
 // ✅ Combine all modules
