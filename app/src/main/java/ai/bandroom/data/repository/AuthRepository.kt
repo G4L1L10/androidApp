@@ -15,16 +15,22 @@ class AuthRepository(
         return try {
             val response = api.register(SignupRequest(email, password))
             if (response.isSuccessful) {
-                val token = response.body()?.access_token ?: ""
-                Log.d("AuthRepo", "✅ Registered. Saving token: $token")
-                tokenManager.saveAccessToken(token)
-                Result.success(Unit)
+                val token = response.body()?.access_token.orEmpty()
+                if (token.isNotEmpty()) {
+                    Log.d("AuthRepo", "✅ Registered. Saving token: $token")
+                    tokenManager.saveAccessToken(token)
+                    Result.success(Unit)
+                } else {
+                    Log.e("AuthRepo", "❌ Registration succeeded but token missing")
+                    Result.failure(Exception("Access token missing"))
+                }
             } else {
-                Log.e("AuthRepo", "Register failed: ${response.code()}")
-                Result.failure(Exception(response.errorBody()?.string() ?: "Registration failed"))
+                val errorMsg = response.errorBody()?.string() ?: "Registration failed"
+                Log.e("AuthRepo", "❌ Register failed: $errorMsg")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
-            Log.e("AuthRepo", "Network error during registration", e)
+            Log.e("AuthRepo", "❌ Network error during registration", e)
             Result.failure(e)
         }
     }
@@ -34,20 +40,21 @@ class AuthRepository(
             val response = api.login(LoginRequest(email, password))
             if (response.isSuccessful) {
                 val token = response.body()?.access_token
-                return if (!token.isNullOrEmpty()) {
+                if (!token.isNullOrEmpty()) {
                     Log.d("AuthRepo", "✅ Login success, token: $token")
                     tokenManager.saveAccessToken(token)
-                    Log.d("AuthRepo", "💾 Token saved to DataStore")
                     Result.success(token)
                 } else {
+                    Log.e("AuthRepo", "❌ Login succeeded but token missing")
                     Result.failure(Exception("Access token missing"))
                 }
             } else {
-                Log.e("AuthRepo", "Login failed: ${response.code()}")
-                Result.failure(Exception(response.errorBody()?.string() ?: "Login failed"))
+                val errorMsg = response.errorBody()?.string() ?: "Login failed"
+                Log.e("AuthRepo", "❌ Login failed: $errorMsg")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
-            Log.e("AuthRepo", "Network error during login", e)
+            Log.e("AuthRepo", "❌ Network error during login", e)
             Result.failure(e)
         }
     }
@@ -60,7 +67,7 @@ class AuthRepository(
             Log.d("AuthRepo", "🧾 Validation response: ${response.code()}")
             response.isSuccessful
         } catch (e: Exception) {
-            Log.e("AuthRepo", "Token validation failed", e)
+            Log.e("AuthRepo", "❌ Token validation failed", e)
             false
         }
     }
@@ -70,15 +77,15 @@ class AuthRepository(
             val response = api.refresh()
             if (response.isSuccessful) {
                 val newToken = response.body()?.access_token ?: return false
-                tokenManager.saveAccessToken(newToken)
                 Log.d("AuthRepo", "🔄 Refreshed and saved token: $newToken")
-                return true
+                tokenManager.saveAccessToken(newToken)
+                true
             } else {
-                Log.e("AuthRepo", "Refresh token failed: ${response.code()}")
+                Log.e("AuthRepo", "❌ Refresh token failed: ${response.code()}")
                 false
             }
         } catch (e: Exception) {
-            Log.e("AuthRepo", "Network error during refresh", e)
+            Log.e("AuthRepo", "❌ Network error during token refresh", e)
             false
         }
     }
@@ -88,13 +95,19 @@ class AuthRepository(
             Log.d("AuthRepo", "📨 logout() - calling backend")
             val response = api.logout()
             Log.d("AuthRepo", "📬 logout() response code: ${response.code()}")
-            Log.d("AuthRepo", "🧹 logout() - clearing tokens")
-            tokenManager.clearTokens()
             val success = response.isSuccessful
+
+            if (success) {
+                Log.d("AuthRepo", "🧹 logout() - clearing tokens from DataStore")
+                tokenManager.clearTokens()
+            } else {
+                Log.e("AuthRepo", "❌ logout() - server rejected logout")
+            }
+
             Log.d("AuthRepo", "✅ logout() - API success: $success")
             success
         } catch (e: Exception) {
-            Log.e("AuthRepo", "❌ Logout failed", e)
+            Log.e("AuthRepo", "❌ logout() - network error", e)
             false
         }
     }

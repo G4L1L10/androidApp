@@ -1,6 +1,8 @@
 package ai.bandroom.ui.screens.main.tabs
 
 import ai.bandroom.viewmodel.ProfileViewModel
+import android.util.Log
+import android.webkit.CookieManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -50,6 +52,10 @@ fun ProfileTab(
 
         Button(onClick = {
             println("👆 Logout button clicked")
+
+            val cookieHeader = CookieManager.getInstance().getCookie("http://10.0.2.2:8081")
+            Log.d("🍪 COOKIE_DEBUG", "Before logout, cookies = $cookieHeader")
+
             viewModel.logout()
         }) {
             Text("Logout")
