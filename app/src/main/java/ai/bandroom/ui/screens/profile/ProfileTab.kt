@@ -16,8 +16,8 @@ fun ProfileTab(
     viewModel: ProfileViewModel = koinViewModel()
 ) {
     val logoutState by viewModel.logoutSuccess.collectAsState()
+    val email by viewModel.email.collectAsState()
 
-    // 🔄 Observe logout state to navigate
     LaunchedEffect(logoutState) {
         println("🚪 Logout state observed: $logoutState")
         if (logoutState == true) {
@@ -36,6 +36,16 @@ fun ProfileTab(
         verticalArrangement = Arrangement.Center
     ) {
         Text("👤 Profile Screen", style = MaterialTheme.typography.headlineLarge)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (email != null) {
+            Text("Welcome, ${email?.substringBefore("@")}", style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("($email)", style = MaterialTheme.typography.bodySmall)
+        } else {
+            Text("Loading email...", style = MaterialTheme.typography.bodySmall)
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(onClick = {
