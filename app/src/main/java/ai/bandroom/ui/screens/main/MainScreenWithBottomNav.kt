@@ -23,7 +23,6 @@ fun MainScreenWithBottomNav(navController: NavHostController) {
                 items.forEach { screen ->
                     NavigationBarItem(
                         icon = { Icon(screen.icon, contentDescription = screen.label) },
-                        label = { Text(screen.label) },
                         selected = currentRoute == screen.route,
                         onClick = {
                             bottomNavController.navigate(screen.route) {
@@ -31,7 +30,9 @@ fun MainScreenWithBottomNav(navController: NavHostController) {
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        }
+                        },
+                        alwaysShowLabel = false, // ✅ Hides the label
+//                        label = { Text(screen.label) } // You can keep this or remove it; doesn't show if `alwaysShowLabel = false`
                     )
                 }
             }
